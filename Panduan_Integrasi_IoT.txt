@@ -1,0 +1,67 @@
+=============================================================================
+PANDUAN INTEGRASI PERANGKAT KERAS IOT (ESP32 / LoRa) KE SISTEM BANJIR ROB
+=============================================================================
+
+Dokumen ini ditujukan untuk tim Hardware / IoT Engineer agar dapat 
+menghubungkan perangkat fisik dengan sistem backend web pemantauan.
+
+-----------------------------------------------------------------------------
+BAGIAN 1: PENGIRIMAN DATA SENSOR (TELEMETRY)
+-----------------------------------------------------------------------------
+Untuk mengirimkan data ketinggian air (Water Level) dan titik koordinat GPS 
+ke server, perangkat harus melakukan HTTP POST Request ke endpoint berikut:
+
+URL Endpoint: 
+http://<IP_SERVER_ATAU_DOMAIN>:5000/api/v1/telemetry
+
+Method: 
+POST
+
+Header: 
+Content-Type: application/json
+
+Payload JSON (Contoh):
+{
+  "stationId": "c012215f-23c4-4eb8-a192-e1d227b35f1b",
+  "waterLevel": 2.15
+}
+
+Keterangan Parameter:
+- stationId  (String) : ID unik stasiun. Nilai ini didapatkan setelah Anda menginput data stasiun di Database MySQL. (Wajib)
+- waterLevel (Float)  : Pembacaan ketinggian air saat ini dari sensor ultrasonik / radar. (Wajib)
+
+
+-----------------------------------------------------------------------------
+BAGIAN 2: PENERIMAAN PERINTAH AKTUATOR (KONTROL SIRINE / LED)
+-----------------------------------------------------------------------------
+Sistem ini menggunakan arsitektur MQTT. Backend web adalah Publisher,
+dan ESP32 bertindak sebagai Subscriber.
+
+Detail Koneksi MQTT:
+- Broker (Server) : test.mosquitto.org
+- Port            : 1883
+- Topic Subscribe : banjir_rob/actuator/toggle
+
+Logika Kerja di ESP32:
+1. Pastikan terhubung ke internet (WiFi.h atau GSM LoRa).
+2. Gunakan library PubSubClient untuk terkoneksi ke broker di atas.
+3. Set-up subscribe pada topik: banjir_rob/actuator/toggle
+4. Website akan menerbitkan payload saat tombol sirine diklik, dalam format JSON.
+5. Contoh payload yang akan masuk ke callback ESP32: 
+   {"state": true} atau {"state": false}
+6. Lakukan de-serialisasi JSON. Jika state = true, jalankan digitalWrite(PIN, HIGH).
+
+
+-----------------------------------------------------------------------------
+BAGIAN 3: CARA PENGETESAN INTEGRASI
+-----------------------------------------------------------------------------
+1. Pastikan server backend Node.js berjalan.
+2. Gunakan Postman / cURL di komputer Anda untuk menembak dummy data POST terlebih dahulu ke server. Ini memastikan rute API tidak terhalang Firewall Windows.
+3. Flash source code IoT ke mikrokontroler. Pantau Serial Monitor.
+4. Refresh web dashboard. Periksa apakah indikator Stasiun berubah menjadi "Live".
+5. Perhatikan grafik. Jika data water level masuk, laju (rateOfRise) dan status bahaya (Aman/Siaga/Awas) akan berubah secara matematis berkat logika Fuzzy.
+6. Klik tombol "Kontrol Sirine" di layar web. Jika relay / sirine berbunyi di alat, selamat! Integrasi 2 arah telah sukses.
+
+=============================================================================
+Selesai. Selamat Berkreasi dan Mengembangkan Hardware!
+=============================================================================
