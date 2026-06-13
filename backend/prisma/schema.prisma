@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Station {
+  id        String         @id @default(uuid())
+  name      String         @db.VarChar(100)
+  latitude  Float
+  longitude Float
+  logs      TelemetryLog[]
+}
+
+model TelemetryLog {
+  id          BigInt   @id @default(autoincrement())
+  stationId   String
+  station     Station  @relation(fields: [stationId], references: [id])
+  waterLevel  Float
+  rateOfRise  Float
+  fuzzyValue  Float
+  status      String   @db.VarChar(20)
+  createdAt   DateTime @default(now())
+}
