@@ -12,13 +12,13 @@ async function getLive(req, res) {
 
 async function ingestTelemetry(req, res) {
   try {
-    const { stationId, waterLevel } = req.body;
+    const { stationId, waterLevel, latitude, longitude } = req.body;
     
     if (!stationId || waterLevel === undefined) {
       return res.status(400).json({ success: false, error: 'Missing stationId or waterLevel' });
     }
 
-    const log = await telemetryService.processIncomingTelemetry(stationId, waterLevel);
+    const log = await telemetryService.processIncomingTelemetry(stationId, waterLevel, latitude, longitude);
     res.json({ success: true, data: log });
   } catch (error) {
     console.error('Error ingesting telemetry:', error);

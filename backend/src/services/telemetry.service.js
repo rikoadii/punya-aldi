@@ -1,7 +1,18 @@
 const prisma = require('../prisma/client');
 const { calculateFuzzy } = require('./fuzzy.service');
 
-async function processIncomingTelemetry(stationId, waterLevel) {
+async function processIncomingTelemetry(stationId, waterLevel, latitude, longitude) {
+  // Update lokasi Station jika alat mengirim koordinat GPS
+  if (latitude !== undefined && longitude !== undefined) {
+    await prisma.station.update({
+      where: { id: stationId },
+      data: {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude)
+      }
+    });
+  }
+
   // 1. Dapatkan log terakhir untuk menghitung rateOfRise
   const lastLog = await prisma.telemetryLog.findFirst({
     where: { stationId },
